@@ -1,0 +1,3603 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Analytics Dashboard - Analytics Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+        .nav {
+            background-color: #1a1a1a;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-title {
+            color: white;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        .nav-link {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .nav-link:hover {
+            background-color: #333;
+        }
+        .nav-link.active {
+            background-color: #444;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 60px;
+            z-index: 10;
+        }
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f8f9fa !important;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+        .number-cell {
+            text-align: right;
+        }
+        .sno-cell {
+            text-align: center;
+            width: 50px;
+        }
+        .filter-header {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .column-filter {
+            width: calc(100% - 16px);
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .filter-controls {
+            margin: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .filter-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .clear-filters {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .clear-filters:hover {
+            background-color: #e9ecef;
+        }
+        .city-card {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .city-name {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .city-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .city-stat {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .city-stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .city-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .filter-status {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .nav-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .container {
+                margin: 1rem;
+                padding: 15px;
+            }
+            .city-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-content">
+            <h1 class="nav-title">Movie Analytics Dashboard</h1>
+            <div class="nav-links">
+                <a href="#home" class="nav-link active" onclick="showPage('home')">Home</a>
+                <a href="#showtime" class="nav-link" onclick="showPage('showtime')">Showtime Data</a>
+                <a href="#theater" class="nav-link" onclick="showPage('theater')">Theater Data</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="home" class="page active">
+        <div class="container">
+            <div class="city-card">
+                <div class="city-name">Hyderabad</div>
+                <div class="city-stats">
+                    <div class="city-stat">
+                        <div class="city-stat-value">28</div>
+                        <div class="city-stat-label">Theaters</div>
+                    </div>
+                    <div class="city-stat">
+                        <div class="city-stat-value">229</div>
+                        <div class="city-stat-label">Total Shows</div>
+                    </div>
+                    <div class="city-stat">
+                        <div class="city-stat-value">₹18,305,770</div>
+                        <div class="city-stat-label">Revenue</div>
+                    </div>
+                    <div class="city-stat">
+                        <div class="city-stat-value">49.89%</div>
+                        <div class="city-stat-label">Occupancy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<div id="showtime" class="page">
+        <div class="container">
+            <h2 class="page-title">Showtime Analytics</h2>
+            <div class="filter-controls">
+                <div class="filter-status">
+                    <span id="showtime-table-filter-count"></span>
+                </div>
+                <button class="filter-button clear-filters" onclick="clearFilters('showtime-table')">Clear All Filters</button>
+            </div>
+            <table id="showtime-table">
+                <thead>
+                    <tr>
+                        <th class="sno-cell">
+                            <div class="filter-header">
+                                <div>S.No</div>
+                                <input type="text" class="column-filter" data-column="0" 
+                                       placeholder="Filter..." onkeyup="applyFilters('showtime-table')">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="filter-header">
+                                <div>Venue Name</div>
+                                <input type="text" class="column-filter" data-column="1" 
+                                       placeholder="Filter venue..." onkeyup="applyFilters('showtime-table')">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="filter-header">
+                                <div>Show Time</div>
+                                <input type="text" class="column-filter" data-column="2" 
+                                       placeholder="Filter time..." onkeyup="applyFilters('showtime-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Max Seats</div>
+                                <input type="number" class="column-filter" data-column="3" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('showtime-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Available Seats</div>
+                                <input type="number" class="column-filter" data-column="4" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('showtime-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Booked Tickets</div>
+                                <input type="number" class="column-filter" data-column="5" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('showtime-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Total Gross</div>
+                                <input type="number" class="column-filter" data-column="6" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('showtime-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Booked Gross</div>
+                                <input type="number" class="column-filter" data-column="7" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('showtime-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Occupancy %</div>
+                                <input type="number" class="column-filter" data-column="8" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('showtime-table')">
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                        <tr class="">
+                            <td class="sno-cell">1</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>04:45 AM</td>
+                            <td class="number-cell">131</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">131</td>
+                            <td class="number-cell">₹58,900</td>
+                            <td class="number-cell">₹58,900</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">2</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>05:30 AM</td>
+                            <td class="number-cell">322</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">322</td>
+                            <td class="number-cell">₹144,280</td>
+                            <td class="number-cell">₹144,280</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">3</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>08:00 AM</td>
+                            <td class="number-cell">131</td>
+                            <td class="number-cell">1</td>
+                            <td class="number-cell">130</td>
+                            <td class="number-cell">₹58,900</td>
+                            <td class="number-cell">₹58,455</td>
+                            <td class="number-cell">99.24%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">4</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>08:45 AM</td>
+                            <td class="number-cell">322</td>
+                            <td class="number-cell">48</td>
+                            <td class="number-cell">274</td>
+                            <td class="number-cell">₹144,280</td>
+                            <td class="number-cell">₹122,920</td>
+                            <td class="number-cell">85.20%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">5</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>09:00 AM</td>
+                            <td class="number-cell">304</td>
+                            <td class="number-cell">69</td>
+                            <td class="number-cell">235</td>
+                            <td class="number-cell">₹136,215</td>
+                            <td class="number-cell">₹105,510</td>
+                            <td class="number-cell">77.46%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">6</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>11:15 AM</td>
+                            <td class="number-cell">131</td>
+                            <td class="number-cell">20</td>
+                            <td class="number-cell">111</td>
+                            <td class="number-cell">₹58,900</td>
+                            <td class="number-cell">₹50,000</td>
+                            <td class="number-cell">84.89%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">7</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>12:05 PM</td>
+                            <td class="number-cell">322</td>
+                            <td class="number-cell">88</td>
+                            <td class="number-cell">234</td>
+                            <td class="number-cell">₹144,280</td>
+                            <td class="number-cell">₹105,120</td>
+                            <td class="number-cell">72.86%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">8</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>03:25 PM</td>
+                            <td class="number-cell">322</td>
+                            <td class="number-cell">107</td>
+                            <td class="number-cell">215</td>
+                            <td class="number-cell">₹144,280</td>
+                            <td class="number-cell">₹96,665</td>
+                            <td class="number-cell">67.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">9</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>03:40 PM</td>
+                            <td class="number-cell">304</td>
+                            <td class="number-cell">127</td>
+                            <td class="number-cell">177</td>
+                            <td class="number-cell">₹136,215</td>
+                            <td class="number-cell">₹79,700</td>
+                            <td class="number-cell">58.51%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">10</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>06:20 PM</td>
+                            <td class="number-cell">131</td>
+                            <td class="number-cell">36</td>
+                            <td class="number-cell">95</td>
+                            <td class="number-cell">₹58,900</td>
+                            <td class="number-cell">₹42,880</td>
+                            <td class="number-cell">72.80%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">11</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>06:45 PM</td>
+                            <td class="number-cell">322</td>
+                            <td class="number-cell">58</td>
+                            <td class="number-cell">264</td>
+                            <td class="number-cell">₹144,280</td>
+                            <td class="number-cell">₹118,470</td>
+                            <td class="number-cell">82.11%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">12</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>09:35 PM</td>
+                            <td class="number-cell">131</td>
+                            <td class="number-cell">32</td>
+                            <td class="number-cell">99</td>
+                            <td class="number-cell">₹58,900</td>
+                            <td class="number-cell">₹44,660</td>
+                            <td class="number-cell">75.82%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">13</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td>10:05 PM</td>
+                            <td class="number-cell">322</td>
+                            <td class="number-cell">55</td>
+                            <td class="number-cell">267</td>
+                            <td class="number-cell">₹144,280</td>
+                            <td class="number-cell">₹119,805</td>
+                            <td class="number-cell">83.04%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">14</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">436</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">436</td>
+                            <td class="number-cell">₹194,790</td>
+                            <td class="number-cell">₹194,790</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">15</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>04:35 AM</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">16</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>04:45 AM</td>
+                            <td class="number-cell">158</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">158</td>
+                            <td class="number-cell">₹70,970</td>
+                            <td class="number-cell">₹70,970</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">17</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>05:00 AM</td>
+                            <td class="number-cell">214</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">214</td>
+                            <td class="number-cell">₹95,780</td>
+                            <td class="number-cell">₹95,780</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">18</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>09:10 AM</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">19</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>12:30 PM</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">20</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>03:50 PM</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">21</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>04:00 PM</td>
+                            <td class="number-cell">214</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">214</td>
+                            <td class="number-cell">₹95,780</td>
+                            <td class="number-cell">₹95,780</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">22</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>06:35 PM</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">23</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>07:10 PM</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">24</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>07:20 PM</td>
+                            <td class="number-cell">214</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">214</td>
+                            <td class="number-cell">₹95,780</td>
+                            <td class="number-cell">₹95,780</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">25</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>10:30 PM</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">₹137,720</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">26</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td>10:35 PM</td>
+                            <td class="number-cell">214</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">214</td>
+                            <td class="number-cell">₹95,780</td>
+                            <td class="number-cell">₹95,780</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">27</td>
+                            <td>Asian Cinemart: RC Puram</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">387</td>
+                            <td class="number-cell">82</td>
+                            <td class="number-cell">305</td>
+                            <td class="number-cell">₹173,370</td>
+                            <td class="number-cell">₹136,880</td>
+                            <td class="number-cell">78.95%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">28</td>
+                            <td>Asian Cinemart: RC Puram</td>
+                            <td>07:20 AM</td>
+                            <td class="number-cell">387</td>
+                            <td class="number-cell">229</td>
+                            <td class="number-cell">158</td>
+                            <td class="number-cell">₹173,370</td>
+                            <td class="number-cell">₹71,465</td>
+                            <td class="number-cell">41.22%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">29</td>
+                            <td>Asian Cinemart: RC Puram</td>
+                            <td>10:50 AM</td>
+                            <td class="number-cell">387</td>
+                            <td class="number-cell">257</td>
+                            <td class="number-cell">130</td>
+                            <td class="number-cell">₹173,370</td>
+                            <td class="number-cell">₹59,005</td>
+                            <td class="number-cell">34.03%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">30</td>
+                            <td>Asian Cinemart: RC Puram</td>
+                            <td>02:20 PM</td>
+                            <td class="number-cell">387</td>
+                            <td class="number-cell">289</td>
+                            <td class="number-cell">98</td>
+                            <td class="number-cell">₹173,370</td>
+                            <td class="number-cell">₹44,765</td>
+                            <td class="number-cell">25.82%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">31</td>
+                            <td>Asian Cinemart: RC Puram</td>
+                            <td>05:50 PM</td>
+                            <td class="number-cell">387</td>
+                            <td class="number-cell">276</td>
+                            <td class="number-cell">111</td>
+                            <td class="number-cell">₹173,370</td>
+                            <td class="number-cell">₹50,550</td>
+                            <td class="number-cell">29.16%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">32</td>
+                            <td>Asian Cinemart: RC Puram</td>
+                            <td>09:20 PM</td>
+                            <td class="number-cell">387</td>
+                            <td class="number-cell">217</td>
+                            <td class="number-cell">170</td>
+                            <td class="number-cell">₹173,370</td>
+                            <td class="number-cell">₹76,805</td>
+                            <td class="number-cell">44.30%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">33</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">690</td>
+                            <td class="number-cell">58</td>
+                            <td class="number-cell">632</td>
+                            <td class="number-cell">₹307,050</td>
+                            <td class="number-cell">₹281,240</td>
+                            <td class="number-cell">91.59%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">34</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>04:20 AM</td>
+                            <td class="number-cell">359</td>
+                            <td class="number-cell">57</td>
+                            <td class="number-cell">302</td>
+                            <td class="number-cell">₹159,755</td>
+                            <td class="number-cell">₹134,390</td>
+                            <td class="number-cell">84.12%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">35</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>07:20 AM</td>
+                            <td class="number-cell">690</td>
+                            <td class="number-cell">375</td>
+                            <td class="number-cell">315</td>
+                            <td class="number-cell">₹307,050</td>
+                            <td class="number-cell">₹140,175</td>
+                            <td class="number-cell">45.65%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">36</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>07:40 AM</td>
+                            <td class="number-cell">359</td>
+                            <td class="number-cell">221</td>
+                            <td class="number-cell">138</td>
+                            <td class="number-cell">₹159,755</td>
+                            <td class="number-cell">₹61,410</td>
+                            <td class="number-cell">38.44%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">37</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>10:50 AM</td>
+                            <td class="number-cell">690</td>
+                            <td class="number-cell">421</td>
+                            <td class="number-cell">269</td>
+                            <td class="number-cell">₹307,050</td>
+                            <td class="number-cell">₹119,705</td>
+                            <td class="number-cell">38.99%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">38</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>11:10 AM</td>
+                            <td class="number-cell">359</td>
+                            <td class="number-cell">246</td>
+                            <td class="number-cell">113</td>
+                            <td class="number-cell">₹159,755</td>
+                            <td class="number-cell">₹50,285</td>
+                            <td class="number-cell">31.48%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">39</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>02:20 PM</td>
+                            <td class="number-cell">690</td>
+                            <td class="number-cell">487</td>
+                            <td class="number-cell">203</td>
+                            <td class="number-cell">₹307,050</td>
+                            <td class="number-cell">₹90,335</td>
+                            <td class="number-cell">29.42%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">40</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>02:40 PM</td>
+                            <td class="number-cell">359</td>
+                            <td class="number-cell">239</td>
+                            <td class="number-cell">120</td>
+                            <td class="number-cell">₹159,755</td>
+                            <td class="number-cell">₹53,400</td>
+                            <td class="number-cell">33.43%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">41</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>05:50 PM</td>
+                            <td class="number-cell">690</td>
+                            <td class="number-cell">440</td>
+                            <td class="number-cell">250</td>
+                            <td class="number-cell">₹307,050</td>
+                            <td class="number-cell">₹111,250</td>
+                            <td class="number-cell">36.23%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">42</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>06:10 PM</td>
+                            <td class="number-cell">359</td>
+                            <td class="number-cell">178</td>
+                            <td class="number-cell">181</td>
+                            <td class="number-cell">₹159,755</td>
+                            <td class="number-cell">₹80,545</td>
+                            <td class="number-cell">50.42%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">43</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>09:30 PM</td>
+                            <td class="number-cell">690</td>
+                            <td class="number-cell">426</td>
+                            <td class="number-cell">264</td>
+                            <td class="number-cell">₹307,050</td>
+                            <td class="number-cell">₹117,480</td>
+                            <td class="number-cell">38.26%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">44</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td>09:50 PM</td>
+                            <td class="number-cell">359</td>
+                            <td class="number-cell">220</td>
+                            <td class="number-cell">139</td>
+                            <td class="number-cell">₹159,755</td>
+                            <td class="number-cell">₹61,855</td>
+                            <td class="number-cell">38.72%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">45</td>
+                            <td>Asian CineSquare Multiplex: Uppal</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">496</td>
+                            <td class="number-cell">108</td>
+                            <td class="number-cell">388</td>
+                            <td class="number-cell">₹221,765</td>
+                            <td class="number-cell">₹173,705</td>
+                            <td class="number-cell">78.33%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">46</td>
+                            <td>Asian CineSquare Multiplex: Uppal</td>
+                            <td>04:40 AM</td>
+                            <td class="number-cell">475</td>
+                            <td class="number-cell">175</td>
+                            <td class="number-cell">300</td>
+                            <td class="number-cell">₹212,585</td>
+                            <td class="number-cell">₹134,710</td>
+                            <td class="number-cell">63.37%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">47</td>
+                            <td>Asian CineSquare Multiplex: Uppal</td>
+                            <td>07:20 AM</td>
+                            <td class="number-cell">496</td>
+                            <td class="number-cell">229</td>
+                            <td class="number-cell">267</td>
+                            <td class="number-cell">₹221,765</td>
+                            <td class="number-cell">₹119,860</td>
+                            <td class="number-cell">54.05%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">48</td>
+                            <td>Asian CineSquare Multiplex: Uppal</td>
+                            <td>10:50 AM</td>
+                            <td class="number-cell">496</td>
+                            <td class="number-cell">321</td>
+                            <td class="number-cell">175</td>
+                            <td class="number-cell">₹221,765</td>
+                            <td class="number-cell">₹78,920</td>
+                            <td class="number-cell">35.59%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">49</td>
+                            <td>Asian CineSquare Multiplex: Uppal</td>
+                            <td>02:20 PM</td>
+                            <td class="number-cell">496</td>
+                            <td class="number-cell">370</td>
+                            <td class="number-cell">126</td>
+                            <td class="number-cell">₹221,765</td>
+                            <td class="number-cell">₹57,115</td>
+                            <td class="number-cell">25.75%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">50</td>
+                            <td>Asian CineSquare Multiplex: Uppal</td>
+                            <td>05:50 PM</td>
+                            <td class="number-cell">496</td>
+                            <td class="number-cell">247</td>
+                            <td class="number-cell">249</td>
+                            <td class="number-cell">₹221,765</td>
+                            <td class="number-cell">₹111,850</td>
+                            <td class="number-cell">50.44%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">51</td>
+                            <td>Asian CineSquare Multiplex: Uppal</td>
+                            <td>09:20 PM</td>
+                            <td class="number-cell">496</td>
+                            <td class="number-cell">248</td>
+                            <td class="number-cell">248</td>
+                            <td class="number-cell">₹221,765</td>
+                            <td class="number-cell">₹111,405</td>
+                            <td class="number-cell">50.24%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">52</td>
+                            <td>Asian Ganga 4K: Dilsukhnagar</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">707</td>
+                            <td class="number-cell">87</td>
+                            <td class="number-cell">620</td>
+                            <td class="number-cell">₹183,375</td>
+                            <td class="number-cell">₹162,180</td>
+                            <td class="number-cell">88.44%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">53</td>
+                            <td>Asian Ganga 4K: Dilsukhnagar</td>
+                            <td>07:15 AM</td>
+                            <td class="number-cell">707</td>
+                            <td class="number-cell">287</td>
+                            <td class="number-cell">420</td>
+                            <td class="number-cell">₹183,375</td>
+                            <td class="number-cell">₹111,600</td>
+                            <td class="number-cell">60.86%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">54</td>
+                            <td>Asian Ganga 4K: Dilsukhnagar</td>
+                            <td>10:45 AM</td>
+                            <td class="number-cell">707</td>
+                            <td class="number-cell">325</td>
+                            <td class="number-cell">382</td>
+                            <td class="number-cell">₹183,375</td>
+                            <td class="number-cell">₹102,450</td>
+                            <td class="number-cell">55.87%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">55</td>
+                            <td>Asian Ganga 4K: Dilsukhnagar</td>
+                            <td>02:15 PM</td>
+                            <td class="number-cell">707</td>
+                            <td class="number-cell">347</td>
+                            <td class="number-cell">360</td>
+                            <td class="number-cell">₹183,375</td>
+                            <td class="number-cell">₹96,660</td>
+                            <td class="number-cell">52.71%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">56</td>
+                            <td>Asian Ganga 4K: Dilsukhnagar</td>
+                            <td>05:45 PM</td>
+                            <td class="number-cell">707</td>
+                            <td class="number-cell">359</td>
+                            <td class="number-cell">348</td>
+                            <td class="number-cell">₹183,375</td>
+                            <td class="number-cell">₹93,425</td>
+                            <td class="number-cell">50.95%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">57</td>
+                            <td>Asian Ganga 4K: Dilsukhnagar</td>
+                            <td>09:15 PM</td>
+                            <td class="number-cell">707</td>
+                            <td class="number-cell">244</td>
+                            <td class="number-cell">463</td>
+                            <td class="number-cell">₹183,375</td>
+                            <td class="number-cell">₹118,290</td>
+                            <td class="number-cell">64.51%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">58</td>
+                            <td>Asian Jyothi: RC Puram</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">820</td>
+                            <td class="number-cell">110</td>
+                            <td class="number-cell">710</td>
+                            <td class="number-cell">₹190,700</td>
+                            <td class="number-cell">₹172,600</td>
+                            <td class="number-cell">90.51%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">59</td>
+                            <td>Asian Jyothi: RC Puram</td>
+                            <td>07:45 AM</td>
+                            <td class="number-cell">820</td>
+                            <td class="number-cell">564</td>
+                            <td class="number-cell">256</td>
+                            <td class="number-cell">₹190,700</td>
+                            <td class="number-cell">₹63,500</td>
+                            <td class="number-cell">33.30%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">60</td>
+                            <td>Asian Jyothi: RC Puram</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">820</td>
+                            <td class="number-cell">446</td>
+                            <td class="number-cell">374</td>
+                            <td class="number-cell">₹190,700</td>
+                            <td class="number-cell">₹88,350</td>
+                            <td class="number-cell">46.33%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">61</td>
+                            <td>Asian Jyothi: RC Puram</td>
+                            <td>02:15 PM</td>
+                            <td class="number-cell">820</td>
+                            <td class="number-cell">712</td>
+                            <td class="number-cell">108</td>
+                            <td class="number-cell">₹190,700</td>
+                            <td class="number-cell">₹27,000</td>
+                            <td class="number-cell">14.16%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">62</td>
+                            <td>Asian Jyothi: RC Puram</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">820</td>
+                            <td class="number-cell">616</td>
+                            <td class="number-cell">204</td>
+                            <td class="number-cell">₹190,700</td>
+                            <td class="number-cell">₹47,500</td>
+                            <td class="number-cell">24.91%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">63</td>
+                            <td>Asian Jyothi: RC Puram</td>
+                            <td>09:15 PM</td>
+                            <td class="number-cell">820</td>
+                            <td class="number-cell">499</td>
+                            <td class="number-cell">321</td>
+                            <td class="number-cell">₹190,700</td>
+                            <td class="number-cell">₹73,600</td>
+                            <td class="number-cell">38.59%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">64</td>
+                            <td>Asian Lakshmikala Cinepride: Moosapet</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">945</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">945</td>
+                            <td class="number-cell">₹235,700</td>
+                            <td class="number-cell">₹235,700</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">65</td>
+                            <td>Asian Lakshmikala Cinepride: Moosapet</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">945</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">945</td>
+                            <td class="number-cell">₹235,700</td>
+                            <td class="number-cell">₹235,700</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">66</td>
+                            <td>Asian Lakshmikala Cinepride: Moosapet</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">945</td>
+                            <td class="number-cell">152</td>
+                            <td class="number-cell">793</td>
+                            <td class="number-cell">₹235,700</td>
+                            <td class="number-cell">₹202,720</td>
+                            <td class="number-cell">86.01%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">67</td>
+                            <td>Asian Lakshmikala Cinepride: Moosapet</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">945</td>
+                            <td class="number-cell">431</td>
+                            <td class="number-cell">514</td>
+                            <td class="number-cell">₹235,700</td>
+                            <td class="number-cell">₹131,070</td>
+                            <td class="number-cell">55.61%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">68</td>
+                            <td>Asian Lakshmikala Cinepride: Moosapet</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">945</td>
+                            <td class="number-cell">346</td>
+                            <td class="number-cell">599</td>
+                            <td class="number-cell">₹235,700</td>
+                            <td class="number-cell">₹153,425</td>
+                            <td class="number-cell">65.09%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">69</td>
+                            <td>Asian Lakshmikala Cinepride: Moosapet</td>
+                            <td>09:30 PM</td>
+                            <td class="number-cell">945</td>
+                            <td class="number-cell">237</td>
+                            <td class="number-cell">708</td>
+                            <td class="number-cell">₹235,700</td>
+                            <td class="number-cell">₹180,795</td>
+                            <td class="number-cell">76.71%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">70</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">356</td>
+                            <td class="number-cell">131</td>
+                            <td class="number-cell">225</td>
+                            <td class="number-cell">₹158,420</td>
+                            <td class="number-cell">₹100,125</td>
+                            <td class="number-cell">63.20%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">71</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>04:20 AM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">182</td>
+                            <td class="number-cell">142</td>
+                            <td class="number-cell">₹144,950</td>
+                            <td class="number-cell">₹63,960</td>
+                            <td class="number-cell">44.13%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">72</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>07:20 AM</td>
+                            <td class="number-cell">356</td>
+                            <td class="number-cell">299</td>
+                            <td class="number-cell">57</td>
+                            <td class="number-cell">₹158,420</td>
+                            <td class="number-cell">₹25,365</td>
+                            <td class="number-cell">16.01%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">73</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>07:40 AM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">269</td>
+                            <td class="number-cell">55</td>
+                            <td class="number-cell">₹144,950</td>
+                            <td class="number-cell">₹25,245</td>
+                            <td class="number-cell">17.42%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">74</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>10:50 AM</td>
+                            <td class="number-cell">356</td>
+                            <td class="number-cell">300</td>
+                            <td class="number-cell">56</td>
+                            <td class="number-cell">₹158,420</td>
+                            <td class="number-cell">₹24,920</td>
+                            <td class="number-cell">15.73%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">75</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>11:10 AM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">275</td>
+                            <td class="number-cell">49</td>
+                            <td class="number-cell">₹144,950</td>
+                            <td class="number-cell">₹22,575</td>
+                            <td class="number-cell">15.57%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">76</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>02:20 PM</td>
+                            <td class="number-cell">356</td>
+                            <td class="number-cell">333</td>
+                            <td class="number-cell">23</td>
+                            <td class="number-cell">₹158,420</td>
+                            <td class="number-cell">₹10,235</td>
+                            <td class="number-cell">6.46%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">77</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>02:40 PM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">292</td>
+                            <td class="number-cell">32</td>
+                            <td class="number-cell">₹144,950</td>
+                            <td class="number-cell">₹15,010</td>
+                            <td class="number-cell">10.36%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">78</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>05:50 PM</td>
+                            <td class="number-cell">356</td>
+                            <td class="number-cell">327</td>
+                            <td class="number-cell">29</td>
+                            <td class="number-cell">₹158,420</td>
+                            <td class="number-cell">₹12,905</td>
+                            <td class="number-cell">8.15%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">79</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>06:10 PM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">222</td>
+                            <td class="number-cell">102</td>
+                            <td class="number-cell">₹144,950</td>
+                            <td class="number-cell">₹46,160</td>
+                            <td class="number-cell">31.85%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">80</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>09:20 PM</td>
+                            <td class="number-cell">356</td>
+                            <td class="number-cell">305</td>
+                            <td class="number-cell">51</td>
+                            <td class="number-cell">₹158,420</td>
+                            <td class="number-cell">₹22,695</td>
+                            <td class="number-cell">14.33%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">81</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td>09:40 PM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">268</td>
+                            <td class="number-cell">56</td>
+                            <td class="number-cell">₹144,950</td>
+                            <td class="number-cell">₹25,690</td>
+                            <td class="number-cell">17.72%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">82</td>
+                            <td>Asian Mukta A2 Konark: Dilsukhnagar</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">780</td>
+                            <td class="number-cell">192</td>
+                            <td class="number-cell">588</td>
+                            <td class="number-cell">₹187,375</td>
+                            <td class="number-cell">₹144,405</td>
+                            <td class="number-cell">77.07%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">83</td>
+                            <td>Asian Mukta A2 Konark: Dilsukhnagar</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">780</td>
+                            <td class="number-cell">476</td>
+                            <td class="number-cell">304</td>
+                            <td class="number-cell">₹187,375</td>
+                            <td class="number-cell">₹76,670</td>
+                            <td class="number-cell">40.92%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">84</td>
+                            <td>Asian Mukta A2 Konark: Dilsukhnagar</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">780</td>
+                            <td class="number-cell">514</td>
+                            <td class="number-cell">266</td>
+                            <td class="number-cell">₹187,375</td>
+                            <td class="number-cell">₹67,980</td>
+                            <td class="number-cell">36.28%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">85</td>
+                            <td>Asian Mukta A2 Konark: Dilsukhnagar</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">780</td>
+                            <td class="number-cell">599</td>
+                            <td class="number-cell">181</td>
+                            <td class="number-cell">₹187,375</td>
+                            <td class="number-cell">₹47,075</td>
+                            <td class="number-cell">25.12%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">86</td>
+                            <td>Asian Mukta A2 Konark: Dilsukhnagar</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">780</td>
+                            <td class="number-cell">544</td>
+                            <td class="number-cell">236</td>
+                            <td class="number-cell">₹187,375</td>
+                            <td class="number-cell">₹61,040</td>
+                            <td class="number-cell">32.58%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">87</td>
+                            <td>Asian Mukta A2 Konark: Dilsukhnagar</td>
+                            <td>09:30 PM</td>
+                            <td class="number-cell">780</td>
+                            <td class="number-cell">523</td>
+                            <td class="number-cell">257</td>
+                            <td class="number-cell">₹187,375</td>
+                            <td class="number-cell">₹63,060</td>
+                            <td class="number-cell">33.65%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">88</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">480</td>
+                            <td class="number-cell">79</td>
+                            <td class="number-cell">401</td>
+                            <td class="number-cell">₹115,740</td>
+                            <td class="number-cell">₹97,765</td>
+                            <td class="number-cell">84.47%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">89</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>04:45 AM</td>
+                            <td class="number-cell">633</td>
+                            <td class="number-cell">284</td>
+                            <td class="number-cell">349</td>
+                            <td class="number-cell">₹131,525</td>
+                            <td class="number-cell">₹76,130</td>
+                            <td class="number-cell">57.88%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">90</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>07:15 AM</td>
+                            <td class="number-cell">480</td>
+                            <td class="number-cell">374</td>
+                            <td class="number-cell">106</td>
+                            <td class="number-cell">₹115,740</td>
+                            <td class="number-cell">₹25,370</td>
+                            <td class="number-cell">21.92%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">91</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>08:00 AM</td>
+                            <td class="number-cell">633</td>
+                            <td class="number-cell">539</td>
+                            <td class="number-cell">94</td>
+                            <td class="number-cell">₹131,525</td>
+                            <td class="number-cell">₹21,425</td>
+                            <td class="number-cell">16.29%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">92</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>10:30 AM</td>
+                            <td class="number-cell">480</td>
+                            <td class="number-cell">445</td>
+                            <td class="number-cell">35</td>
+                            <td class="number-cell">₹115,740</td>
+                            <td class="number-cell">₹9,675</td>
+                            <td class="number-cell">8.36%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">93</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>11:15 AM</td>
+                            <td class="number-cell">633</td>
+                            <td class="number-cell">540</td>
+                            <td class="number-cell">93</td>
+                            <td class="number-cell">₹131,525</td>
+                            <td class="number-cell">₹21,200</td>
+                            <td class="number-cell">16.12%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">94</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>01:45 PM</td>
+                            <td class="number-cell">480</td>
+                            <td class="number-cell">460</td>
+                            <td class="number-cell">20</td>
+                            <td class="number-cell">₹115,740</td>
+                            <td class="number-cell">₹6,205</td>
+                            <td class="number-cell">5.36%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">95</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">633</td>
+                            <td class="number-cell">563</td>
+                            <td class="number-cell">70</td>
+                            <td class="number-cell">₹131,525</td>
+                            <td class="number-cell">₹16,490</td>
+                            <td class="number-cell">12.54%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">96</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>05:45 PM</td>
+                            <td class="number-cell">480</td>
+                            <td class="number-cell">462</td>
+                            <td class="number-cell">18</td>
+                            <td class="number-cell">₹115,740</td>
+                            <td class="number-cell">₹5,720</td>
+                            <td class="number-cell">4.94%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">97</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>06:30 PM</td>
+                            <td class="number-cell">633</td>
+                            <td class="number-cell">534</td>
+                            <td class="number-cell">99</td>
+                            <td class="number-cell">₹131,525</td>
+                            <td class="number-cell">₹22,835</td>
+                            <td class="number-cell">17.36%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">98</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>09:00 PM</td>
+                            <td class="number-cell">480</td>
+                            <td class="number-cell">405</td>
+                            <td class="number-cell">75</td>
+                            <td class="number-cell">₹115,740</td>
+                            <td class="number-cell">₹18,325</td>
+                            <td class="number-cell">15.83%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">99</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td>09:45 PM</td>
+                            <td class="number-cell">633</td>
+                            <td class="number-cell">553</td>
+                            <td class="number-cell">80</td>
+                            <td class="number-cell">₹131,525</td>
+                            <td class="number-cell">₹19,100</td>
+                            <td class="number-cell">14.52%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">100</td>
+                            <td>Asian Mukta Cinemas A2: MJR Square, Narapally</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">447</td>
+                            <td class="number-cell">163</td>
+                            <td class="number-cell">284</td>
+                            <td class="number-cell">₹202,435</td>
+                            <td class="number-cell">₹129,900</td>
+                            <td class="number-cell">64.17%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">101</td>
+                            <td>Asian Mukta Cinemas A2: MJR Square, Narapally</td>
+                            <td>07:20 AM</td>
+                            <td class="number-cell">447</td>
+                            <td class="number-cell">259</td>
+                            <td class="number-cell">188</td>
+                            <td class="number-cell">₹202,435</td>
+                            <td class="number-cell">₹86,795</td>
+                            <td class="number-cell">42.88%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">102</td>
+                            <td>Asian Mukta Cinemas A2: MJR Square, Narapally</td>
+                            <td>10:50 AM</td>
+                            <td class="number-cell">447</td>
+                            <td class="number-cell">280</td>
+                            <td class="number-cell">167</td>
+                            <td class="number-cell">₹202,435</td>
+                            <td class="number-cell">₹77,670</td>
+                            <td class="number-cell">38.37%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">103</td>
+                            <td>Asian Mukta Cinemas A2: MJR Square, Narapally</td>
+                            <td>02:20 PM</td>
+                            <td class="number-cell">447</td>
+                            <td class="number-cell">338</td>
+                            <td class="number-cell">109</td>
+                            <td class="number-cell">₹202,435</td>
+                            <td class="number-cell">₹51,365</td>
+                            <td class="number-cell">25.37%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">104</td>
+                            <td>Asian Mukta Cinemas A2: MJR Square, Narapally</td>
+                            <td>05:50 PM</td>
+                            <td class="number-cell">447</td>
+                            <td class="number-cell">286</td>
+                            <td class="number-cell">161</td>
+                            <td class="number-cell">₹202,435</td>
+                            <td class="number-cell">₹75,165</td>
+                            <td class="number-cell">37.13%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">105</td>
+                            <td>Asian Mukta Cinemas A2: MJR Square, Narapally</td>
+                            <td>09:20 PM</td>
+                            <td class="number-cell">447</td>
+                            <td class="number-cell">193</td>
+                            <td class="number-cell">254</td>
+                            <td class="number-cell">₹202,435</td>
+                            <td class="number-cell">₹116,495</td>
+                            <td class="number-cell">57.55%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">106</td>
+                            <td>Asian Mukund Cinema: Medchal</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">539</td>
+                            <td class="number-cell">201</td>
+                            <td class="number-cell">338</td>
+                            <td class="number-cell">₹149,225</td>
+                            <td class="number-cell">₹93,700</td>
+                            <td class="number-cell">62.79%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">107</td>
+                            <td>Asian Mukund Cinema: Medchal</td>
+                            <td>07:45 AM</td>
+                            <td class="number-cell">539</td>
+                            <td class="number-cell">363</td>
+                            <td class="number-cell">176</td>
+                            <td class="number-cell">₹149,225</td>
+                            <td class="number-cell">₹48,900</td>
+                            <td class="number-cell">32.77%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">108</td>
+                            <td>Asian Mukund Cinema: Medchal</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">539</td>
+                            <td class="number-cell">361</td>
+                            <td class="number-cell">178</td>
+                            <td class="number-cell">₹149,225</td>
+                            <td class="number-cell">₹49,450</td>
+                            <td class="number-cell">33.14%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">109</td>
+                            <td>Asian Mukund Cinema: Medchal</td>
+                            <td>02:15 PM</td>
+                            <td class="number-cell">539</td>
+                            <td class="number-cell">387</td>
+                            <td class="number-cell">152</td>
+                            <td class="number-cell">₹149,225</td>
+                            <td class="number-cell">₹42,300</td>
+                            <td class="number-cell">28.35%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">110</td>
+                            <td>Asian Mukund Cinema: Medchal</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">539</td>
+                            <td class="number-cell">360</td>
+                            <td class="number-cell">179</td>
+                            <td class="number-cell">₹149,225</td>
+                            <td class="number-cell">₹49,725</td>
+                            <td class="number-cell">33.32%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">111</td>
+                            <td>Asian Mukund Cinema: Medchal</td>
+                            <td>09:15 PM</td>
+                            <td class="number-cell">539</td>
+                            <td class="number-cell">341</td>
+                            <td class="number-cell">198</td>
+                            <td class="number-cell">₹149,225</td>
+                            <td class="number-cell">₹54,950</td>
+                            <td class="number-cell">36.82%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">112</td>
+                            <td>Asian Radhika Multiplex: ECIL</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">382</td>
+                            <td class="number-cell">91</td>
+                            <td class="number-cell">291</td>
+                            <td class="number-cell">₹169,990</td>
+                            <td class="number-cell">₹129,495</td>
+                            <td class="number-cell">76.18%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">113</td>
+                            <td>Asian Radhika Multiplex: ECIL</td>
+                            <td>04:30 AM</td>
+                            <td class="number-cell">341</td>
+                            <td class="number-cell">131</td>
+                            <td class="number-cell">210</td>
+                            <td class="number-cell">₹151,745</td>
+                            <td class="number-cell">₹93,450</td>
+                            <td class="number-cell">61.58%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">114</td>
+                            <td>Asian Radhika Multiplex: ECIL</td>
+                            <td>07:15 AM</td>
+                            <td class="number-cell">382</td>
+                            <td class="number-cell">184</td>
+                            <td class="number-cell">198</td>
+                            <td class="number-cell">₹169,990</td>
+                            <td class="number-cell">₹88,110</td>
+                            <td class="number-cell">51.83%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">115</td>
+                            <td>Asian Radhika Multiplex: ECIL</td>
+                            <td>10:45 AM</td>
+                            <td class="number-cell">382</td>
+                            <td class="number-cell">229</td>
+                            <td class="number-cell">153</td>
+                            <td class="number-cell">₹169,990</td>
+                            <td class="number-cell">₹68,085</td>
+                            <td class="number-cell">40.05%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">116</td>
+                            <td>Asian Radhika Multiplex: ECIL</td>
+                            <td>02:15 PM</td>
+                            <td class="number-cell">382</td>
+                            <td class="number-cell">273</td>
+                            <td class="number-cell">109</td>
+                            <td class="number-cell">₹169,990</td>
+                            <td class="number-cell">₹48,505</td>
+                            <td class="number-cell">28.53%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">117</td>
+                            <td>Asian Radhika Multiplex: ECIL</td>
+                            <td>05:45 PM</td>
+                            <td class="number-cell">382</td>
+                            <td class="number-cell">230</td>
+                            <td class="number-cell">152</td>
+                            <td class="number-cell">₹169,990</td>
+                            <td class="number-cell">₹67,640</td>
+                            <td class="number-cell">39.79%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">118</td>
+                            <td>Asian Radhika Multiplex: ECIL</td>
+                            <td>09:15 PM</td>
+                            <td class="number-cell">382</td>
+                            <td class="number-cell">176</td>
+                            <td class="number-cell">206</td>
+                            <td class="number-cell">₹169,990</td>
+                            <td class="number-cell">₹91,670</td>
+                            <td class="number-cell">53.93%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">119</td>
+                            <td>Asian Rajya Lakshmi: Uppal</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">606</td>
+                            <td class="number-cell">145</td>
+                            <td class="number-cell">461</td>
+                            <td class="number-cell">₹144,430</td>
+                            <td class="number-cell">₹110,750</td>
+                            <td class="number-cell">76.68%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">120</td>
+                            <td>Asian Rajya Lakshmi: Uppal</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">606</td>
+                            <td class="number-cell">357</td>
+                            <td class="number-cell">249</td>
+                            <td class="number-cell">₹144,430</td>
+                            <td class="number-cell">₹61,130</td>
+                            <td class="number-cell">42.33%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">121</td>
+                            <td>Asian Rajya Lakshmi: Uppal</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">606</td>
+                            <td class="number-cell">445</td>
+                            <td class="number-cell">161</td>
+                            <td class="number-cell">₹144,430</td>
+                            <td class="number-cell">₹39,990</td>
+                            <td class="number-cell">27.69%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">122</td>
+                            <td>Asian Rajya Lakshmi: Uppal</td>
+                            <td>02:15 PM</td>
+                            <td class="number-cell">606</td>
+                            <td class="number-cell">505</td>
+                            <td class="number-cell">101</td>
+                            <td class="number-cell">₹144,430</td>
+                            <td class="number-cell">₹26,525</td>
+                            <td class="number-cell">18.37%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">123</td>
+                            <td>Asian Rajya Lakshmi: Uppal</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">606</td>
+                            <td class="number-cell">436</td>
+                            <td class="number-cell">170</td>
+                            <td class="number-cell">₹144,430</td>
+                            <td class="number-cell">₹41,705</td>
+                            <td class="number-cell">28.88%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">124</td>
+                            <td>Asian Rajya Lakshmi: Uppal</td>
+                            <td>09:15 PM</td>
+                            <td class="number-cell">606</td>
+                            <td class="number-cell">400</td>
+                            <td class="number-cell">206</td>
+                            <td class="number-cell">₹144,430</td>
+                            <td class="number-cell">₹50,815</td>
+                            <td class="number-cell">35.18%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">125</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">716</td>
+                            <td class="number-cell">34</td>
+                            <td class="number-cell">682</td>
+                            <td class="number-cell">₹186,760</td>
+                            <td class="number-cell">₹179,620</td>
+                            <td class="number-cell">96.18%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">126</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>04:15 AM</td>
+                            <td class="number-cell">380</td>
+                            <td class="number-cell">38</td>
+                            <td class="number-cell">342</td>
+                            <td class="number-cell">₹98,780</td>
+                            <td class="number-cell">₹90,800</td>
+                            <td class="number-cell">91.92%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">127</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">716</td>
+                            <td class="number-cell">334</td>
+                            <td class="number-cell">382</td>
+                            <td class="number-cell">₹186,760</td>
+                            <td class="number-cell">₹103,360</td>
+                            <td class="number-cell">55.34%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">128</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>07:45 AM</td>
+                            <td class="number-cell">380</td>
+                            <td class="number-cell">256</td>
+                            <td class="number-cell">124</td>
+                            <td class="number-cell">₹98,780</td>
+                            <td class="number-cell">₹33,970</td>
+                            <td class="number-cell">34.39%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">129</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">716</td>
+                            <td class="number-cell">502</td>
+                            <td class="number-cell">214</td>
+                            <td class="number-cell">₹186,760</td>
+                            <td class="number-cell">₹58,200</td>
+                            <td class="number-cell">31.16%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">130</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>11:15 AM</td>
+                            <td class="number-cell">380</td>
+                            <td class="number-cell">307</td>
+                            <td class="number-cell">73</td>
+                            <td class="number-cell">₹98,780</td>
+                            <td class="number-cell">₹20,075</td>
+                            <td class="number-cell">20.32%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">131</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">716</td>
+                            <td class="number-cell">566</td>
+                            <td class="number-cell">150</td>
+                            <td class="number-cell">₹186,760</td>
+                            <td class="number-cell">₹41,185</td>
+                            <td class="number-cell">22.05%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">132</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>02:45 PM</td>
+                            <td class="number-cell">380</td>
+                            <td class="number-cell">305</td>
+                            <td class="number-cell">75</td>
+                            <td class="number-cell">₹98,780</td>
+                            <td class="number-cell">₹20,625</td>
+                            <td class="number-cell">20.88%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">133</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">716</td>
+                            <td class="number-cell">473</td>
+                            <td class="number-cell">243</td>
+                            <td class="number-cell">₹186,760</td>
+                            <td class="number-cell">₹65,200</td>
+                            <td class="number-cell">34.91%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">134</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>06:15 PM</td>
+                            <td class="number-cell">380</td>
+                            <td class="number-cell">239</td>
+                            <td class="number-cell">141</td>
+                            <td class="number-cell">₹98,780</td>
+                            <td class="number-cell">₹38,710</td>
+                            <td class="number-cell">39.19%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">135</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>09:30 PM</td>
+                            <td class="number-cell">716</td>
+                            <td class="number-cell">437</td>
+                            <td class="number-cell">279</td>
+                            <td class="number-cell">₹186,760</td>
+                            <td class="number-cell">₹74,970</td>
+                            <td class="number-cell">40.14%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">136</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td>09:45 PM</td>
+                            <td class="number-cell">380</td>
+                            <td class="number-cell">285</td>
+                            <td class="number-cell">95</td>
+                            <td class="number-cell">₹98,780</td>
+                            <td class="number-cell">₹25,865</td>
+                            <td class="number-cell">26.18%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">137</td>
+                            <td>Asian Shiva 4K: Dilsukhnagar</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">554</td>
+                            <td class="number-cell">321</td>
+                            <td class="number-cell">233</td>
+                            <td class="number-cell">₹145,915</td>
+                            <td class="number-cell">₹63,685</td>
+                            <td class="number-cell">43.65%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">138</td>
+                            <td>Asian Shiva 4K: Dilsukhnagar</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">554</td>
+                            <td class="number-cell">318</td>
+                            <td class="number-cell">236</td>
+                            <td class="number-cell">₹145,915</td>
+                            <td class="number-cell">₹64,705</td>
+                            <td class="number-cell">44.34%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">139</td>
+                            <td>Asian Shiva 4K: Dilsukhnagar</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">554</td>
+                            <td class="number-cell">338</td>
+                            <td class="number-cell">216</td>
+                            <td class="number-cell">₹145,915</td>
+                            <td class="number-cell">₹59,270</td>
+                            <td class="number-cell">40.62%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">140</td>
+                            <td>Asian Shiva 4K: Dilsukhnagar</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">554</td>
+                            <td class="number-cell">326</td>
+                            <td class="number-cell">228</td>
+                            <td class="number-cell">₹145,915</td>
+                            <td class="number-cell">₹62,505</td>
+                            <td class="number-cell">42.84%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">141</td>
+                            <td>Asian Shiva 4K: Dilsukhnagar</td>
+                            <td>09:30 PM</td>
+                            <td class="number-cell">554</td>
+                            <td class="number-cell">255</td>
+                            <td class="number-cell">299</td>
+                            <td class="number-cell">₹145,915</td>
+                            <td class="number-cell">₹77,935</td>
+                            <td class="number-cell">53.41%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">142</td>
+                            <td>Asian Swapna 70mm: Katedan</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">512</td>
+                            <td class="number-cell">312</td>
+                            <td class="number-cell">200</td>
+                            <td class="number-cell">₹128,515</td>
+                            <td class="number-cell">₹48,760</td>
+                            <td class="number-cell">37.94%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">143</td>
+                            <td>Asian Swapna 70mm: Katedan</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">512</td>
+                            <td class="number-cell">343</td>
+                            <td class="number-cell">169</td>
+                            <td class="number-cell">₹128,515</td>
+                            <td class="number-cell">₹40,950</td>
+                            <td class="number-cell">31.86%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">144</td>
+                            <td>Asian Swapna 70mm: Katedan</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">512</td>
+                            <td class="number-cell">340</td>
+                            <td class="number-cell">172</td>
+                            <td class="number-cell">₹128,515</td>
+                            <td class="number-cell">₹41,320</td>
+                            <td class="number-cell">32.15%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">145</td>
+                            <td>Asian Swapna 70mm: Katedan</td>
+                            <td>02:00 PM</td>
+                            <td class="number-cell">512</td>
+                            <td class="number-cell">352</td>
+                            <td class="number-cell">160</td>
+                            <td class="number-cell">₹128,515</td>
+                            <td class="number-cell">₹38,800</td>
+                            <td class="number-cell">30.19%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">146</td>
+                            <td>Asian Swapna 70mm: Katedan</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">512</td>
+                            <td class="number-cell">352</td>
+                            <td class="number-cell">160</td>
+                            <td class="number-cell">₹128,515</td>
+                            <td class="number-cell">₹38,800</td>
+                            <td class="number-cell">30.19%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">147</td>
+                            <td>Asian Swapna 70mm: Katedan</td>
+                            <td>09:00 PM</td>
+                            <td class="number-cell">512</td>
+                            <td class="number-cell">347</td>
+                            <td class="number-cell">165</td>
+                            <td class="number-cell">₹128,515</td>
+                            <td class="number-cell">₹39,915</td>
+                            <td class="number-cell">31.06%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">148</td>
+                            <td>Asian Tarakarama Cineplex: Kachiguda</td>
+                            <td>07:00 AM</td>
+                            <td class="number-cell">464</td>
+                            <td class="number-cell">189</td>
+                            <td class="number-cell">275</td>
+                            <td class="number-cell">₹128,800</td>
+                            <td class="number-cell">₹76,825</td>
+                            <td class="number-cell">59.65%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">149</td>
+                            <td>Asian Tarakarama Cineplex: Kachiguda</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">464</td>
+                            <td class="number-cell">229</td>
+                            <td class="number-cell">235</td>
+                            <td class="number-cell">₹128,800</td>
+                            <td class="number-cell">₹65,825</td>
+                            <td class="number-cell">51.11%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">150</td>
+                            <td>Asian Tarakarama Cineplex: Kachiguda</td>
+                            <td>02:15 PM</td>
+                            <td class="number-cell">464</td>
+                            <td class="number-cell">304</td>
+                            <td class="number-cell">160</td>
+                            <td class="number-cell">₹128,800</td>
+                            <td class="number-cell">₹45,000</td>
+                            <td class="number-cell">34.94%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">151</td>
+                            <td>Asian Tarakarama Cineplex: Kachiguda</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">464</td>
+                            <td class="number-cell">277</td>
+                            <td class="number-cell">187</td>
+                            <td class="number-cell">₹128,800</td>
+                            <td class="number-cell">₹52,575</td>
+                            <td class="number-cell">40.82%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">152</td>
+                            <td>Asian Tarakarama Cineplex: Kachiguda</td>
+                            <td>09:15 PM</td>
+                            <td class="number-cell">464</td>
+                            <td class="number-cell">226</td>
+                            <td class="number-cell">238</td>
+                            <td class="number-cell">₹128,800</td>
+                            <td class="number-cell">₹66,650</td>
+                            <td class="number-cell">51.75%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">153</td>
+                            <td>Bhujanga 70MM: Jeedimetla</td>
+                            <td>07:45 AM</td>
+                            <td class="number-cell">506</td>
+                            <td class="number-cell">496</td>
+                            <td class="number-cell">10</td>
+                            <td class="number-cell">₹122,705</td>
+                            <td class="number-cell">₹2,100</td>
+                            <td class="number-cell">1.71%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">154</td>
+                            <td>Bhujanga 70MM: Jeedimetla</td>
+                            <td>11:15 AM</td>
+                            <td class="number-cell">518</td>
+                            <td class="number-cell">517</td>
+                            <td class="number-cell">1</td>
+                            <td class="number-cell">₹125,225</td>
+                            <td class="number-cell">₹210</td>
+                            <td class="number-cell">0.17%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">155</td>
+                            <td>Bhujanga 70MM: Jeedimetla</td>
+                            <td>02:15 PM</td>
+                            <td class="number-cell">518</td>
+                            <td class="number-cell">516</td>
+                            <td class="number-cell">2</td>
+                            <td class="number-cell">₹125,225</td>
+                            <td class="number-cell">₹550</td>
+                            <td class="number-cell">0.44%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">156</td>
+                            <td>Bhujanga 70MM: Jeedimetla</td>
+                            <td>06:15 PM</td>
+                            <td class="number-cell">518</td>
+                            <td class="number-cell">518</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">₹125,225</td>
+                            <td class="number-cell">₹0</td>
+                            <td class="number-cell">0.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">157</td>
+                            <td>Bhujanga 70MM: Jeedimetla</td>
+                            <td>09:15 PM</td>
+                            <td class="number-cell">518</td>
+                            <td class="number-cell">513</td>
+                            <td class="number-cell">5</td>
+                            <td class="number-cell">₹125,225</td>
+                            <td class="number-cell">₹1,375</td>
+                            <td class="number-cell">1.10%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">158</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">619</td>
+                            <td class="number-cell">174</td>
+                            <td class="number-cell">445</td>
+                            <td class="number-cell">₹145,625</td>
+                            <td class="number-cell">₹113,890</td>
+                            <td class="number-cell">78.21%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">159</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>04:05 AM</td>
+                            <td class="number-cell">576</td>
+                            <td class="number-cell">196</td>
+                            <td class="number-cell">380</td>
+                            <td class="number-cell">₹135,450</td>
+                            <td class="number-cell">₹97,675</td>
+                            <td class="number-cell">72.11%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">160</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>07:25 AM</td>
+                            <td class="number-cell">619</td>
+                            <td class="number-cell">307</td>
+                            <td class="number-cell">312</td>
+                            <td class="number-cell">₹145,625</td>
+                            <td class="number-cell">₹82,150</td>
+                            <td class="number-cell">56.41%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">161</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>07:35 AM</td>
+                            <td class="number-cell">576</td>
+                            <td class="number-cell">349</td>
+                            <td class="number-cell">227</td>
+                            <td class="number-cell">₹135,450</td>
+                            <td class="number-cell">₹60,630</td>
+                            <td class="number-cell">44.76%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">162</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">619</td>
+                            <td class="number-cell">311</td>
+                            <td class="number-cell">308</td>
+                            <td class="number-cell">₹145,625</td>
+                            <td class="number-cell">₹81,370</td>
+                            <td class="number-cell">55.88%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">163</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>11:10 AM</td>
+                            <td class="number-cell">576</td>
+                            <td class="number-cell">323</td>
+                            <td class="number-cell">253</td>
+                            <td class="number-cell">₹135,450</td>
+                            <td class="number-cell">₹67,330</td>
+                            <td class="number-cell">49.71%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">164</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">619</td>
+                            <td class="number-cell">395</td>
+                            <td class="number-cell">224</td>
+                            <td class="number-cell">₹145,625</td>
+                            <td class="number-cell">₹60,395</td>
+                            <td class="number-cell">41.47%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">165</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>02:40 PM</td>
+                            <td class="number-cell">576</td>
+                            <td class="number-cell">384</td>
+                            <td class="number-cell">192</td>
+                            <td class="number-cell">₹135,450</td>
+                            <td class="number-cell">₹51,975</td>
+                            <td class="number-cell">38.37%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">166</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>06:05 PM</td>
+                            <td class="number-cell">619</td>
+                            <td class="number-cell">367</td>
+                            <td class="number-cell">252</td>
+                            <td class="number-cell">₹145,625</td>
+                            <td class="number-cell">₹67,950</td>
+                            <td class="number-cell">46.66%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">167</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>06:15 PM</td>
+                            <td class="number-cell">576</td>
+                            <td class="number-cell">301</td>
+                            <td class="number-cell">275</td>
+                            <td class="number-cell">₹135,450</td>
+                            <td class="number-cell">₹72,685</td>
+                            <td class="number-cell">53.66%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">168</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>09:40 PM</td>
+                            <td class="number-cell">619</td>
+                            <td class="number-cell">349</td>
+                            <td class="number-cell">270</td>
+                            <td class="number-cell">₹145,625</td>
+                            <td class="number-cell">₹71,820</td>
+                            <td class="number-cell">49.32%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">169</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td>09:50 PM</td>
+                            <td class="number-cell">576</td>
+                            <td class="number-cell">350</td>
+                            <td class="number-cell">226</td>
+                            <td class="number-cell">₹135,450</td>
+                            <td class="number-cell">₹61,190</td>
+                            <td class="number-cell">45.18%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">170</td>
+                            <td>GPR Multiplex: Nizampet, Hyderabad</td>
+                            <td>07:15 AM</td>
+                            <td class="number-cell">683</td>
+                            <td class="number-cell">550</td>
+                            <td class="number-cell">133</td>
+                            <td class="number-cell">₹305,310</td>
+                            <td class="number-cell">₹60,560</td>
+                            <td class="number-cell">19.84%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">171</td>
+                            <td>GPR Multiplex: Nizampet, Hyderabad</td>
+                            <td>10:45 AM</td>
+                            <td class="number-cell">683</td>
+                            <td class="number-cell">544</td>
+                            <td class="number-cell">139</td>
+                            <td class="number-cell">₹305,310</td>
+                            <td class="number-cell">₹63,230</td>
+                            <td class="number-cell">20.71%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">172</td>
+                            <td>GPR Multiplex: Nizampet, Hyderabad</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">683</td>
+                            <td class="number-cell">468</td>
+                            <td class="number-cell">215</td>
+                            <td class="number-cell">₹305,310</td>
+                            <td class="number-cell">₹97,050</td>
+                            <td class="number-cell">31.79%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">173</td>
+                            <td>GPR Multiplex: Nizampet, Hyderabad</td>
+                            <td>06:30 PM</td>
+                            <td class="number-cell">683</td>
+                            <td class="number-cell">430</td>
+                            <td class="number-cell">253</td>
+                            <td class="number-cell">₹305,310</td>
+                            <td class="number-cell">₹113,960</td>
+                            <td class="number-cell">37.33%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">174</td>
+                            <td>GPR Multiplex: Nizampet, Hyderabad</td>
+                            <td>10:00 PM</td>
+                            <td class="number-cell">683</td>
+                            <td class="number-cell">468</td>
+                            <td class="number-cell">215</td>
+                            <td class="number-cell">₹305,310</td>
+                            <td class="number-cell">₹97,050</td>
+                            <td class="number-cell">31.79%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">175</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">504</td>
+                            <td class="number-cell">241</td>
+                            <td class="number-cell">263</td>
+                            <td class="number-cell">₹141,120</td>
+                            <td class="number-cell">₹74,785</td>
+                            <td class="number-cell">52.99%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">176</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">504</td>
+                            <td class="number-cell">404</td>
+                            <td class="number-cell">100</td>
+                            <td class="number-cell">₹141,120</td>
+                            <td class="number-cell">₹29,060</td>
+                            <td class="number-cell">20.59%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">177</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>08:15 AM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">297</td>
+                            <td class="number-cell">27</td>
+                            <td class="number-cell">₹79,920</td>
+                            <td class="number-cell">₹7,290</td>
+                            <td class="number-cell">9.12%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">178</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">504</td>
+                            <td class="number-cell">407</td>
+                            <td class="number-cell">97</td>
+                            <td class="number-cell">₹141,120</td>
+                            <td class="number-cell">₹28,535</td>
+                            <td class="number-cell">20.22%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">179</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>11:45 AM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">303</td>
+                            <td class="number-cell">21</td>
+                            <td class="number-cell">₹79,920</td>
+                            <td class="number-cell">₹5,730</td>
+                            <td class="number-cell">7.17%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">180</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">504</td>
+                            <td class="number-cell">424</td>
+                            <td class="number-cell">80</td>
+                            <td class="number-cell">₹141,120</td>
+                            <td class="number-cell">₹23,500</td>
+                            <td class="number-cell">16.65%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">181</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>03:15 PM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">304</td>
+                            <td class="number-cell">20</td>
+                            <td class="number-cell">₹79,920</td>
+                            <td class="number-cell">₹5,500</td>
+                            <td class="number-cell">6.88%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">182</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">504</td>
+                            <td class="number-cell">404</td>
+                            <td class="number-cell">100</td>
+                            <td class="number-cell">₹141,120</td>
+                            <td class="number-cell">₹29,540</td>
+                            <td class="number-cell">20.93%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">183</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>06:45 PM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">282</td>
+                            <td class="number-cell">42</td>
+                            <td class="number-cell">₹79,920</td>
+                            <td class="number-cell">₹10,965</td>
+                            <td class="number-cell">13.72%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">184</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>09:30 PM</td>
+                            <td class="number-cell">504</td>
+                            <td class="number-cell">392</td>
+                            <td class="number-cell">112</td>
+                            <td class="number-cell">₹141,120</td>
+                            <td class="number-cell">₹33,320</td>
+                            <td class="number-cell">23.61%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">185</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td>10:15 PM</td>
+                            <td class="number-cell">324</td>
+                            <td class="number-cell">291</td>
+                            <td class="number-cell">33</td>
+                            <td class="number-cell">₹79,920</td>
+                            <td class="number-cell">₹8,580</td>
+                            <td class="number-cell">10.74%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">186</td>
+                            <td>JP Cinemas: Chandanagar</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">282</td>
+                            <td class="number-cell">9</td>
+                            <td class="number-cell">273</td>
+                            <td class="number-cell">₹126,480</td>
+                            <td class="number-cell">₹122,475</td>
+                            <td class="number-cell">96.83%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">187</td>
+                            <td>JP Cinemas: Chandanagar</td>
+                            <td>07:20 AM</td>
+                            <td class="number-cell">282</td>
+                            <td class="number-cell">73</td>
+                            <td class="number-cell">209</td>
+                            <td class="number-cell">₹126,480</td>
+                            <td class="number-cell">₹93,995</td>
+                            <td class="number-cell">74.32%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">188</td>
+                            <td>JP Cinemas: Chandanagar</td>
+                            <td>10:50 AM</td>
+                            <td class="number-cell">282</td>
+                            <td class="number-cell">118</td>
+                            <td class="number-cell">164</td>
+                            <td class="number-cell">₹126,480</td>
+                            <td class="number-cell">₹73,970</td>
+                            <td class="number-cell">58.48%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">189</td>
+                            <td>JP Cinemas: Chandanagar</td>
+                            <td>02:20 PM</td>
+                            <td class="number-cell">282</td>
+                            <td class="number-cell">156</td>
+                            <td class="number-cell">126</td>
+                            <td class="number-cell">₹126,480</td>
+                            <td class="number-cell">₹57,060</td>
+                            <td class="number-cell">45.11%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">190</td>
+                            <td>JP Cinemas: Chandanagar</td>
+                            <td>05:50 PM</td>
+                            <td class="number-cell">282</td>
+                            <td class="number-cell">86</td>
+                            <td class="number-cell">196</td>
+                            <td class="number-cell">₹126,480</td>
+                            <td class="number-cell">₹88,210</td>
+                            <td class="number-cell">69.74%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">191</td>
+                            <td>JP Cinemas: Chandanagar</td>
+                            <td>09:20 PM</td>
+                            <td class="number-cell">282</td>
+                            <td class="number-cell">86</td>
+                            <td class="number-cell">196</td>
+                            <td class="number-cell">₹126,480</td>
+                            <td class="number-cell">₹88,210</td>
+                            <td class="number-cell">69.74%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">192</td>
+                            <td>Mukta A2 Cinemas, Ramakrishna: Abids</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">610</td>
+                            <td class="number-cell">204</td>
+                            <td class="number-cell">406</td>
+                            <td class="number-cell">₹140,110</td>
+                            <td class="number-cell">₹92,365</td>
+                            <td class="number-cell">65.92%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">193</td>
+                            <td>Mukta A2 Cinemas, Ramakrishna: Abids</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">610</td>
+                            <td class="number-cell">528</td>
+                            <td class="number-cell">82</td>
+                            <td class="number-cell">₹140,110</td>
+                            <td class="number-cell">₹19,030</td>
+                            <td class="number-cell">13.58%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">194</td>
+                            <td>Mukta A2 Cinemas, Ramakrishna: Abids</td>
+                            <td>11:15 AM</td>
+                            <td class="number-cell">610</td>
+                            <td class="number-cell">566</td>
+                            <td class="number-cell">44</td>
+                            <td class="number-cell">₹140,110</td>
+                            <td class="number-cell">₹9,655</td>
+                            <td class="number-cell">6.89%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">195</td>
+                            <td>Mukta A2 Cinemas, Ramakrishna: Abids</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">610</td>
+                            <td class="number-cell">593</td>
+                            <td class="number-cell">17</td>
+                            <td class="number-cell">₹140,110</td>
+                            <td class="number-cell">₹3,835</td>
+                            <td class="number-cell">2.74%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">196</td>
+                            <td>Mukta A2 Cinemas, Ramakrishna: Abids</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">610</td>
+                            <td class="number-cell">573</td>
+                            <td class="number-cell">37</td>
+                            <td class="number-cell">₹140,110</td>
+                            <td class="number-cell">₹7,470</td>
+                            <td class="number-cell">5.33%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">197</td>
+                            <td>Mukta A2 Cinemas, Ramakrishna: Abids</td>
+                            <td>09:30 PM</td>
+                            <td class="number-cell">610</td>
+                            <td class="number-cell">584</td>
+                            <td class="number-cell">26</td>
+                            <td class="number-cell">₹140,110</td>
+                            <td class="number-cell">₹6,975</td>
+                            <td class="number-cell">4.98%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">198</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">224</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">224</td>
+                            <td class="number-cell">₹99,680</td>
+                            <td class="number-cell">₹99,680</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">199</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>07:05 AM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">200</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>07:10 AM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">201</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>10:00 AM</td>
+                            <td class="number-cell">224</td>
+                            <td class="number-cell">178</td>
+                            <td class="number-cell">46</td>
+                            <td class="number-cell">₹99,680</td>
+                            <td class="number-cell">₹20,470</td>
+                            <td class="number-cell">20.54%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">202</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>10:10 AM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">89</td>
+                            <td class="number-cell">275</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹122,375</td>
+                            <td class="number-cell">75.55%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">203</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>10:15 AM</td>
+                            <td class="number-cell">629</td>
+                            <td class="number-cell">89</td>
+                            <td class="number-cell">540</td>
+                            <td class="number-cell">₹279,905</td>
+                            <td class="number-cell">₹240,300</td>
+                            <td class="number-cell">85.85%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">204</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>10:15 AM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">116</td>
+                            <td class="number-cell">248</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹110,360</td>
+                            <td class="number-cell">68.13%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">205</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>10:20 AM</td>
+                            <td class="number-cell">390</td>
+                            <td class="number-cell">106</td>
+                            <td class="number-cell">284</td>
+                            <td class="number-cell">₹173,550</td>
+                            <td class="number-cell">₹126,380</td>
+                            <td class="number-cell">72.82%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">206</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>01:20 PM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">161</td>
+                            <td class="number-cell">203</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹90,335</td>
+                            <td class="number-cell">55.77%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">207</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>01:25 PM</td>
+                            <td class="number-cell">629</td>
+                            <td class="number-cell">165</td>
+                            <td class="number-cell">464</td>
+                            <td class="number-cell">₹279,905</td>
+                            <td class="number-cell">₹206,480</td>
+                            <td class="number-cell">73.77%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">208</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>01:25 PM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">166</td>
+                            <td class="number-cell">198</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹88,110</td>
+                            <td class="number-cell">54.40%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">209</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>01:30 PM</td>
+                            <td class="number-cell">390</td>
+                            <td class="number-cell">170</td>
+                            <td class="number-cell">220</td>
+                            <td class="number-cell">₹173,550</td>
+                            <td class="number-cell">₹97,900</td>
+                            <td class="number-cell">56.41%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">210</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>04:30 PM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">164</td>
+                            <td class="number-cell">200</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹89,000</td>
+                            <td class="number-cell">54.95%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">211</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>04:35 PM</td>
+                            <td class="number-cell">629</td>
+                            <td class="number-cell">186</td>
+                            <td class="number-cell">443</td>
+                            <td class="number-cell">₹279,905</td>
+                            <td class="number-cell">₹197,135</td>
+                            <td class="number-cell">70.43%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">212</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>04:35 PM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">175</td>
+                            <td class="number-cell">189</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹84,105</td>
+                            <td class="number-cell">51.92%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">213</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>04:40 PM</td>
+                            <td class="number-cell">390</td>
+                            <td class="number-cell">191</td>
+                            <td class="number-cell">199</td>
+                            <td class="number-cell">₹173,550</td>
+                            <td class="number-cell">₹88,555</td>
+                            <td class="number-cell">51.03%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">214</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>07:40 PM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">101</td>
+                            <td class="number-cell">263</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹117,035</td>
+                            <td class="number-cell">72.25%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">215</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>07:45 PM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">104</td>
+                            <td class="number-cell">260</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹115,700</td>
+                            <td class="number-cell">71.43%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">216</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>10:45 PM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">89</td>
+                            <td class="number-cell">275</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹122,375</td>
+                            <td class="number-cell">75.55%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">217</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td>10:50 PM</td>
+                            <td class="number-cell">364</td>
+                            <td class="number-cell">99</td>
+                            <td class="number-cell">265</td>
+                            <td class="number-cell">₹161,980</td>
+                            <td class="number-cell">₹117,925</td>
+                            <td class="number-cell">72.80%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">218</td>
+                            <td>Sree Sai Puja: Suraram</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">709</td>
+                            <td class="number-cell">219</td>
+                            <td class="number-cell">490</td>
+                            <td class="number-cell">₹173,850</td>
+                            <td class="number-cell">₹120,710</td>
+                            <td class="number-cell">69.43%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">219</td>
+                            <td>Sree Sai Puja: Suraram</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">709</td>
+                            <td class="number-cell">390</td>
+                            <td class="number-cell">319</td>
+                            <td class="number-cell">₹173,850</td>
+                            <td class="number-cell">₹78,300</td>
+                            <td class="number-cell">45.04%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">220</td>
+                            <td>Sree Sai Puja: Suraram</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">709</td>
+                            <td class="number-cell">409</td>
+                            <td class="number-cell">300</td>
+                            <td class="number-cell">₹173,850</td>
+                            <td class="number-cell">₹73,725</td>
+                            <td class="number-cell">42.41%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">221</td>
+                            <td>Sree Sai Puja: Suraram</td>
+                            <td>02:15 PM</td>
+                            <td class="number-cell">709</td>
+                            <td class="number-cell">410</td>
+                            <td class="number-cell">299</td>
+                            <td class="number-cell">₹173,850</td>
+                            <td class="number-cell">₹73,515</td>
+                            <td class="number-cell">42.29%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">222</td>
+                            <td>Sree Sai Puja: Suraram</td>
+                            <td>06:00 PM</td>
+                            <td class="number-cell">709</td>
+                            <td class="number-cell">398</td>
+                            <td class="number-cell">311</td>
+                            <td class="number-cell">₹173,850</td>
+                            <td class="number-cell">₹76,490</td>
+                            <td class="number-cell">44.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">223</td>
+                            <td>Sree Sai Puja: Suraram</td>
+                            <td>09:15 PM</td>
+                            <td class="number-cell">709</td>
+                            <td class="number-cell">407</td>
+                            <td class="number-cell">302</td>
+                            <td class="number-cell">₹173,850</td>
+                            <td class="number-cell">₹74,340</td>
+                            <td class="number-cell">42.76%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">224</td>
+                            <td>Sri Sai Ram 70mm A/C 4k Dolby Atmos: Malkajgiri</td>
+                            <td>04:00 AM</td>
+                            <td class="number-cell">699</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">699</td>
+                            <td class="number-cell">₹156,935</td>
+                            <td class="number-cell">₹156,935</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">225</td>
+                            <td>Sri Sai Ram 70mm A/C 4k Dolby Atmos: Malkajgiri</td>
+                            <td>07:30 AM</td>
+                            <td class="number-cell">699</td>
+                            <td class="number-cell">8</td>
+                            <td class="number-cell">691</td>
+                            <td class="number-cell">₹156,935</td>
+                            <td class="number-cell">₹155,735</td>
+                            <td class="number-cell">99.24%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">226</td>
+                            <td>Sri Sai Ram 70mm A/C 4k Dolby Atmos: Malkajgiri</td>
+                            <td>11:00 AM</td>
+                            <td class="number-cell">699</td>
+                            <td class="number-cell">40</td>
+                            <td class="number-cell">659</td>
+                            <td class="number-cell">₹156,935</td>
+                            <td class="number-cell">₹150,935</td>
+                            <td class="number-cell">96.18%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">227</td>
+                            <td>Sri Sai Ram 70mm A/C 4k Dolby Atmos: Malkajgiri</td>
+                            <td>02:30 PM</td>
+                            <td class="number-cell">699</td>
+                            <td class="number-cell">107</td>
+                            <td class="number-cell">592</td>
+                            <td class="number-cell">₹156,935</td>
+                            <td class="number-cell">₹139,735</td>
+                            <td class="number-cell">89.04%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">228</td>
+                            <td>Sri Sai Ram 70mm A/C 4k Dolby Atmos: Malkajgiri</td>
+                            <td>06:15 PM</td>
+                            <td class="number-cell">699</td>
+                            <td class="number-cell">78</td>
+                            <td class="number-cell">621</td>
+                            <td class="number-cell">₹156,935</td>
+                            <td class="number-cell">₹144,815</td>
+                            <td class="number-cell">92.28%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">229</td>
+                            <td>Sri Sai Ram 70mm A/C 4k Dolby Atmos: Malkajgiri</td>
+                            <td>09:50 PM</td>
+                            <td class="number-cell">699</td>
+                            <td class="number-cell">74</td>
+                            <td class="number-cell">625</td>
+                            <td class="number-cell">₹156,935</td>
+                            <td class="number-cell">₹145,460</td>
+                            <td class="number-cell">92.69%</td>
+                        </tr>
+                    
+                        <tr class="total-row">
+                            <td class="sno-cell"></td>
+                            <td>TOTAL</td>
+                            <td></td>
+                            <td class="number-cell">115,541</td>
+                            <td class="number-cell">60,887</td>
+                            <td class="number-cell">54,654</td>
+                            <td class="number-cell">₹36,693,255</td>
+                            <td class="number-cell">₹18,305,770</td>
+                            <td class="number-cell">49.89%</td>
+                        </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="theater" class="page">
+        <div class="container">
+            <h2 class="page-title">Theater Analytics</h2>
+            <div class="filter-controls">
+                <div class="filter-status">
+                    <span id="theater-table-filter-count"></span>
+                </div>
+                <button class="filter-button clear-filters" onclick="clearFilters('theater-table')">Clear All Filters</button>
+            </div>
+            <table id="theater-table">
+                <thead>
+                    <tr>
+                        <th class="sno-cell">
+                            <div class="filter-header">
+                                <div>S.No</div>
+                                <input type="text" class="column-filter" data-column="0" 
+                                       placeholder="Filter..." onkeyup="applyFilters('theater-table')">
+                            </div>
+                        </th>
+                        <th>
+                            <div class="filter-header">
+                                <div>Theater Name</div>
+                                <input type="text" class="column-filter" data-column="1" 
+                                       placeholder="Filter theater..." onkeyup="applyFilters('theater-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Show Count</div>
+                                <input type="number" class="column-filter" data-column="2" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('theater-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Max Seats</div>
+                                <input type="number" class="column-filter" data-column="3" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('theater-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Available Seats</div>
+                                <input type="number" class="column-filter" data-column="4" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('theater-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Booked Tickets</div>
+                                <input type="number" class="column-filter" data-column="5" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('theater-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Total Gross</div>
+                                <input type="number" class="column-filter" data-column="6" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('theater-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Booked Gross</div>
+                                <input type="number" class="column-filter" data-column="7" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('theater-table')">
+                            </div>
+                        </th>
+                        <th class="number-cell">
+                            <div class="filter-header">
+                                <div>Occupancy %</div>
+                                <input type="number" class="column-filter" data-column="8" data-type="number"
+                                       placeholder="Min value..." onkeyup="applyFilters('theater-table')">
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                        <tr class="">
+                            <td class="sno-cell">1</td>
+                            <td>AAA Cinemas: Ameerpet</td>
+                            <td class="number-cell">13</td>
+                            <td class="number-cell">3,195</td>
+                            <td class="number-cell">641</td>
+                            <td class="number-cell">2,554</td>
+                            <td class="number-cell">₹1,432,610</td>
+                            <td class="number-cell">₹1,147,365</td>
+                            <td class="number-cell">80.09%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">2</td>
+                            <td>AMB Cinemas: Gachibowli</td>
+                            <td class="number-cell">13</td>
+                            <td class="number-cell">3,606</td>
+                            <td class="number-cell">0</td>
+                            <td class="number-cell">3,606</td>
+                            <td class="number-cell">₹1,612,920</td>
+                            <td class="number-cell">₹1,612,920</td>
+                            <td class="number-cell">100.00%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">3</td>
+                            <td>Asian Cinemart: RC Puram</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">2,322</td>
+                            <td class="number-cell">1,350</td>
+                            <td class="number-cell">972</td>
+                            <td class="number-cell">₹1,040,220</td>
+                            <td class="number-cell">₹439,470</td>
+                            <td class="number-cell">42.25%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">4</td>
+                            <td>Asian Cineplanet Multiplex: Kompally</td>
+                            <td class="number-cell">12</td>
+                            <td class="number-cell">6,294</td>
+                            <td class="number-cell">3,368</td>
+                            <td class="number-cell">2,926</td>
+                            <td class="number-cell">₹2,800,830</td>
+                            <td class="number-cell">₹1,302,070</td>
+                            <td class="number-cell">46.49%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">5</td>
+                            <td>Asian CineSquare Multiplex: Uppal</td>
+                            <td class="number-cell">7</td>
+                            <td class="number-cell">3,451</td>
+                            <td class="number-cell">1,698</td>
+                            <td class="number-cell">1,753</td>
+                            <td class="number-cell">₹1,543,175</td>
+                            <td class="number-cell">₹787,565</td>
+                            <td class="number-cell">51.04%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">6</td>
+                            <td>Asian Ganga 4K: Dilsukhnagar</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">4,242</td>
+                            <td class="number-cell">1,649</td>
+                            <td class="number-cell">2,593</td>
+                            <td class="number-cell">₹1,100,250</td>
+                            <td class="number-cell">₹684,605</td>
+                            <td class="number-cell">62.22%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">7</td>
+                            <td>Asian Jyothi: RC Puram</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">4,920</td>
+                            <td class="number-cell">2,947</td>
+                            <td class="number-cell">1,973</td>
+                            <td class="number-cell">₹1,144,200</td>
+                            <td class="number-cell">₹472,550</td>
+                            <td class="number-cell">41.30%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">8</td>
+                            <td>Asian Lakshmikala Cinepride: Moosapet</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">5,670</td>
+                            <td class="number-cell">1,166</td>
+                            <td class="number-cell">4,504</td>
+                            <td class="number-cell">₹1,414,200</td>
+                            <td class="number-cell">₹1,139,410</td>
+                            <td class="number-cell">80.57%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">9</td>
+                            <td>Asian M Cube Mall: Attapur</td>
+                            <td class="number-cell">12</td>
+                            <td class="number-cell">4,080</td>
+                            <td class="number-cell">3,203</td>
+                            <td class="number-cell">877</td>
+                            <td class="number-cell">₹1,820,220</td>
+                            <td class="number-cell">₹394,885</td>
+                            <td class="number-cell">21.69%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">10</td>
+                            <td>Asian Mukta A2 Konark: Dilsukhnagar</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">4,680</td>
+                            <td class="number-cell">2,848</td>
+                            <td class="number-cell">1,832</td>
+                            <td class="number-cell">₹1,124,250</td>
+                            <td class="number-cell">₹460,230</td>
+                            <td class="number-cell">40.94%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">11</td>
+                            <td>Asian Mukta A2 Sensation Cinema: Kairathabad</td>
+                            <td class="number-cell">12</td>
+                            <td class="number-cell">6,678</td>
+                            <td class="number-cell">5,238</td>
+                            <td class="number-cell">1,440</td>
+                            <td class="number-cell">₹1,483,590</td>
+                            <td class="number-cell">₹340,240</td>
+                            <td class="number-cell">22.93%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">12</td>
+                            <td>Asian Mukta Cinemas A2: MJR Square, Narapally</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">2,682</td>
+                            <td class="number-cell">1,519</td>
+                            <td class="number-cell">1,163</td>
+                            <td class="number-cell">₹1,214,610</td>
+                            <td class="number-cell">₹537,390</td>
+                            <td class="number-cell">44.24%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">13</td>
+                            <td>Asian Mukund Cinema: Medchal</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">3,234</td>
+                            <td class="number-cell">2,013</td>
+                            <td class="number-cell">1,221</td>
+                            <td class="number-cell">₹895,350</td>
+                            <td class="number-cell">₹339,025</td>
+                            <td class="number-cell">37.87%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">14</td>
+                            <td>Asian Radhika Multiplex: ECIL</td>
+                            <td class="number-cell">7</td>
+                            <td class="number-cell">2,633</td>
+                            <td class="number-cell">1,314</td>
+                            <td class="number-cell">1,319</td>
+                            <td class="number-cell">₹1,171,685</td>
+                            <td class="number-cell">₹586,955</td>
+                            <td class="number-cell">50.09%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">15</td>
+                            <td>Asian Rajya Lakshmi: Uppal</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">3,636</td>
+                            <td class="number-cell">2,288</td>
+                            <td class="number-cell">1,348</td>
+                            <td class="number-cell">₹866,580</td>
+                            <td class="number-cell">₹330,915</td>
+                            <td class="number-cell">38.19%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">16</td>
+                            <td>Asian Sha & Shahensha: Chintal</td>
+                            <td class="number-cell">12</td>
+                            <td class="number-cell">6,576</td>
+                            <td class="number-cell">3,776</td>
+                            <td class="number-cell">2,800</td>
+                            <td class="number-cell">₹1,713,240</td>
+                            <td class="number-cell">₹752,580</td>
+                            <td class="number-cell">43.93%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">17</td>
+                            <td>Asian Shiva 4K: Dilsukhnagar</td>
+                            <td class="number-cell">5</td>
+                            <td class="number-cell">2,770</td>
+                            <td class="number-cell">1,558</td>
+                            <td class="number-cell">1,212</td>
+                            <td class="number-cell">₹729,575</td>
+                            <td class="number-cell">₹328,100</td>
+                            <td class="number-cell">44.97%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">18</td>
+                            <td>Asian Swapna 70mm: Katedan</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">3,072</td>
+                            <td class="number-cell">2,046</td>
+                            <td class="number-cell">1,026</td>
+                            <td class="number-cell">₹771,090</td>
+                            <td class="number-cell">₹248,545</td>
+                            <td class="number-cell">32.23%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">19</td>
+                            <td>Asian Tarakarama Cineplex: Kachiguda</td>
+                            <td class="number-cell">5</td>
+                            <td class="number-cell">2,320</td>
+                            <td class="number-cell">1,225</td>
+                            <td class="number-cell">1,095</td>
+                            <td class="number-cell">₹644,000</td>
+                            <td class="number-cell">₹306,875</td>
+                            <td class="number-cell">47.65%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">20</td>
+                            <td>Bhujanga 70MM: Jeedimetla</td>
+                            <td class="number-cell">5</td>
+                            <td class="number-cell">2,578</td>
+                            <td class="number-cell">2,560</td>
+                            <td class="number-cell">18</td>
+                            <td class="number-cell">₹623,605</td>
+                            <td class="number-cell">₹4,235</td>
+                            <td class="number-cell">0.68%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">21</td>
+                            <td>Cine Town Indra Nagendra: Karmanghat</td>
+                            <td class="number-cell">12</td>
+                            <td class="number-cell">7,170</td>
+                            <td class="number-cell">3,806</td>
+                            <td class="number-cell">3,364</td>
+                            <td class="number-cell">₹1,686,450</td>
+                            <td class="number-cell">₹889,060</td>
+                            <td class="number-cell">52.72%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">22</td>
+                            <td>GPR Multiplex: Nizampet, Hyderabad</td>
+                            <td class="number-cell">5</td>
+                            <td class="number-cell">3,415</td>
+                            <td class="number-cell">2,460</td>
+                            <td class="number-cell">955</td>
+                            <td class="number-cell">₹1,526,550</td>
+                            <td class="number-cell">₹431,850</td>
+                            <td class="number-cell">28.29%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">23</td>
+                            <td>Indra Venkataramana Padmavati Cinema: Kachiguda</td>
+                            <td class="number-cell">11</td>
+                            <td class="number-cell">4,644</td>
+                            <td class="number-cell">3,749</td>
+                            <td class="number-cell">895</td>
+                            <td class="number-cell">₹1,246,320</td>
+                            <td class="number-cell">₹256,805</td>
+                            <td class="number-cell">20.61%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">24</td>
+                            <td>JP Cinemas: Chandanagar</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">1,692</td>
+                            <td class="number-cell">528</td>
+                            <td class="number-cell">1,164</td>
+                            <td class="number-cell">₹758,880</td>
+                            <td class="number-cell">₹523,920</td>
+                            <td class="number-cell">69.04%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">25</td>
+                            <td>Mukta A2 Cinemas, Ramakrishna: Abids</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">3,660</td>
+                            <td class="number-cell">3,048</td>
+                            <td class="number-cell">612</td>
+                            <td class="number-cell">₹840,660</td>
+                            <td class="number-cell">₹139,330</td>
+                            <td class="number-cell">16.57%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">26</td>
+                            <td>Prasads Multiplex: Hyderabad</td>
+                            <td class="number-cell">20</td>
+                            <td class="number-cell">7,873</td>
+                            <td class="number-cell">2,349</td>
+                            <td class="number-cell">5,524</td>
+                            <td class="number-cell">₹3,503,485</td>
+                            <td class="number-cell">₹2,458,180</td>
+                            <td class="number-cell">70.16%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">27</td>
+                            <td>Sree Sai Puja: Suraram</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">4,254</td>
+                            <td class="number-cell">2,233</td>
+                            <td class="number-cell">2,021</td>
+                            <td class="number-cell">₹1,043,100</td>
+                            <td class="number-cell">₹497,080</td>
+                            <td class="number-cell">47.65%</td>
+                        </tr>
+                    
+                        <tr class="">
+                            <td class="sno-cell">28</td>
+                            <td>Sri Sai Ram 70mm A/C 4k Dolby Atmos: Malkajgiri</td>
+                            <td class="number-cell">6</td>
+                            <td class="number-cell">4,194</td>
+                            <td class="number-cell">307</td>
+                            <td class="number-cell">3,887</td>
+                            <td class="number-cell">₹941,610</td>
+                            <td class="number-cell">₹893,615</td>
+                            <td class="number-cell">94.90%</td>
+                        </tr>
+                    
+                        <tr class="total-row">
+                            <td class="sno-cell"></td>
+                            <td>TOTAL</td>
+                            <td class="number-cell">229</td>
+                            <td class="number-cell">115,541</td>
+                            <td class="number-cell">60,887</td>
+                            <td class="number-cell">54,654</td>
+                            <td class="number-cell">₹36,693,255</td>
+                            <td class="number-cell">₹18,305,770</td>
+                            <td class="number-cell">49.89%</td>
+                        </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+            function filterText(cellValue, filterValue) {
+                return cellValue.toLowerCase().includes(filterValue.toLowerCase());
+            }
+
+            function filterNumber(cellValue, filterValue) {
+                const numValue = parseFloat(cellValue.replace(/[^0-9.-]+/g, ""));
+                const filterNum = parseFloat(filterValue);
+                return !isNaN(filterNum) && numValue >= filterNum;
+            }
+
+            function updateFilterCount(tableId) {
+                const table = document.getElementById(tableId);
+                const totalRows = table.querySelectorAll('tbody tr:not(.total-row)').length;
+                const visibleRows = table.querySelectorAll('tbody tr:not(.total-row):not([style*="display: none"])').length;
+                const countElement = document.getElementById(tableId + '-filter-count');
+                
+                if (visibleRows === totalRows) {
+                    countElement.textContent = '';
+                } else {
+                    countElement.textContent = 'Showing ' + visibleRows + ' of ' + totalRows + ' rows';
+                }
+            }
+
+            function applyFilters(tableId) {
+                const table = document.getElementById(tableId);
+                const filters = Array.from(table.querySelectorAll('.column-filter'))
+                    .map(filter => ({
+                        value: filter.value.trim(),
+                        columnIndex: parseInt(filter.dataset.column),
+                        isNumber: filter.dataset.type === 'number'
+                    }))
+                    .filter(f => f.value !== '');
+
+                const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+                rows.forEach(row => {
+                    if (row.classList.contains('total-row')) {
+                        row.style.display = ''; // Always show total row
+                        return;
+                    }
+
+                    const shouldShow = filters.every(filter => {
+                        const cell = row.cells[filter.columnIndex];
+                        const cellValue = cell.textContent.trim();
+                        return filter.isNumber ? 
+                            filterNumber(cellValue, filter.value) :
+                            filterText(cellValue, filter.value);
+                    });
+
+                    row.style.display = shouldShow ? '' : 'none';
+                });
+
+                // Update visible row numbers
+                let visibleIndex = 1;
+                rows.forEach(row => {
+                    if (row.style.display !== 'none' && !row.classList.contains('total-row')) {
+                        row.cells[0].textContent = visibleIndex++;
+                    }
+                });
+
+                updateFilterCount(tableId);
+            }
+
+            function clearFilters(tableId) {
+                const table = document.getElementById(tableId);
+                table.querySelectorAll('.column-filter').forEach(filter => {
+                    filter.value = '';
+                });
+                applyFilters(tableId);
+            }
+
+            function showPage(pageId) {
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                    if(link.getAttribute('href') === '#' + pageId) {
+                        link.classList.add('active');
+                    }
+                });
+                
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                document.getElementById(pageId).classList.add('active');
+            }
+
+            // Initialize filter counts
+            document.addEventListener('DOMContentLoaded', function() {
+                updateFilterCount('showtime-table');
+                updateFilterCount('theater-table');
+            });
+        </script>
+</body>
+</html>
